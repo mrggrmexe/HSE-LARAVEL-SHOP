@@ -16,13 +16,13 @@
             <div class="text-sm text-gray-500">{{ $product->category?->name }}</div>
             <h1 class="mt-2 text-3xl font-bold">{{ $product->name }}</h1>
 
-            <div class="mt-4 text-3xl font-bold">{{ number_format($product->price, 2, '.', ' ') }} ₽</div>
+            <div class="mt-4 text-3xl font-bold">{{ number_format((float) $product->price, 2, '.', ' ') }} ₽</div>
             <div class="mt-2 text-sm text-gray-500">Остаток на складе: {{ $product->stock }}</div>
 
             <div class="mt-4 text-sm text-gray-700">
                 Рейтинг:
-                @if($product->reviews_avg_rating)
-                    {{ number_format($product->reviews_avg_rating, 1) }}/5
+                @if((float) $product->reviews_avg_rating > 0)
+                    {{ number_format((float) $product->reviews_avg_rating, 1) }}/5
                 @else
                     Нет оценок
                 @endif
@@ -42,12 +42,12 @@
                                 name="quantity"
                                 value="1"
                                 min="1"
-                                max="{{ $product->stock }}"
+                                max="{{ max(1, $product->stock) }}"
                                 class="w-28 rounded-lg border border-gray-300 px-3 py-2"
                             >
                         </div>
 
-                        <button type="submit" class="rounded-lg bg-green-600 px-5 py-2 text-white hover:bg-green-700">
+                        <button type="submit" class="rounded-lg bg-green-600 px-5 py-2 text-white hover:bg-green-700" @disabled($product->stock < 1)>
                             В корзину
                         </button>
                     </form>
@@ -73,14 +73,14 @@
                         <select id="rating" name="rating" class="w-full rounded-lg border border-gray-300 px-3 py-2">
                             <option value="">Выберите оценку</option>
                             @for($i = 5; $i >= 1; $i--)
-                                <option value="{{ $i }}">{{ $i }}</option>
+                                <option value="{{ $i }}" @selected((string) old('rating') === (string) $i)>{{ $i }}</option>
                             @endfor
                         </select>
                     </div>
 
                     <div>
                         <label for="comment" class="mb-2 block text-sm font-medium">Комментарий</label>
-                        <textarea id="comment" name="comment" rows="4" class="w-full rounded-lg border border-gray-300 px-3 py-2"></textarea>
+                        <textarea id="comment" name="comment" rows="4" class="w-full rounded-lg border border-gray-300 px-3 py-2">{{ old('comment') }}</textarea>
                     </div>
 
                     <div>
@@ -137,7 +137,7 @@
                         </div>
                         <div class="p-4">
                             <div class="font-semibold">{{ $relatedProduct->name }}</div>
-                            <div class="mt-2 text-green-700">{{ number_format($relatedProduct->price, 2, '.', ' ') }} ₽</div>
+                            <div class="mt-2 text-green-700">{{ number_format((float) $relatedProduct->price, 2, '.', ' ') }} ₽</div>
                         </div>
                     </a>
                 @endforeach

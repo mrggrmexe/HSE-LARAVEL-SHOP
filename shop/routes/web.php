@@ -11,11 +11,20 @@ use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\ReviewController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [CatalogController::class, 'index'])->name('home');
 Route::get('/catalog', [CatalogController::class, 'index'])->name('catalog.index');
 Route::get('/products/{product}', [CatalogController::class, 'show'])->name('catalog.show');
+
+Route::get('/dashboard', function (Request $request) {
+    if ($request->user()->isAdmin()) {
+        return redirect()->route('admin.dashboard');
+    }
+
+    return redirect()->route('home');
+})->middleware('auth')->name('dashboard');
 
 Route::get('/contact', [FeedbackController::class, 'create'])->name('feedback.create');
 Route::post('/contact', [FeedbackController::class, 'store'])->name('feedback.store');

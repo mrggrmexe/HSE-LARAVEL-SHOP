@@ -22,7 +22,7 @@
                     @endif
 
                     @if(auth()->user()->isAdmin())
-                        <a href="{{ route('admin.dashboard') }}" class="hover:text-green-700">Админка</a>
+                        <a href="{{ route('admin.dashboard') }}" class="hover:text-green-700">Дашборд</a>
                     @endif
 
                     <span class="text-gray-500">{{ auth()->user()->name }}</span>

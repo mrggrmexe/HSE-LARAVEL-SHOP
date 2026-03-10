@@ -27,7 +27,10 @@ class CatalogController extends Controller
             ->search($filters['search'] ?? null)
             ->when(
                 filled($filters['category'] ?? null),
-                fn ($query) => $query->whereHas('category', fn ($categoryQuery) => $categoryQuery->where('slug', $filters['category']))
+                fn ($query) => $query->whereHas(
+                    'category',
+                    fn ($categoryQuery) => $categoryQuery->where('slug', $filters['category'])
+                )
             )
             ->when(
                 filled($filters['min_price'] ?? null),
@@ -60,12 +63,19 @@ class CatalogController extends Controller
             abort(404);
         }
 
-        $this->recordRecentlyViewed($request, $product);
+        if ($request->hasSession()) {
+            $this->recordRecentlyViewed($request, $product);
+        }
 
         $product->load([
             'category',
             'reviews' => fn ($query) => $query->latest()->with('user'),
-        ])->loadAvg('reviews', 'rating');
+        ]);
+
+        $product->setAttribute(
+            'reviews_avg_rating',
+            (float) ($product->reviews()->avg('rating') ?? 0)
+        );
 
         $relatedProducts = Product::query()
             ->active()
@@ -100,8 +110,9 @@ class CatalogController extends Controller
             $staleIds = RecentlyViewedProduct::query()
                 ->where('user_id', $user->id)
                 ->orderByDesc('viewed_at')
-                ->skip(10)
-                ->pluck('id');
+                ->pluck('id')
+                ->slice(10)
+                ->values();
 
             if ($staleIds->isNotEmpty()) {
                 RecentlyViewedProduct::query()->whereIn('id', $staleIds)->delete();
@@ -126,8 +137,9 @@ class CatalogController extends Controller
         $staleIds = RecentlyViewedProduct::query()
             ->where('session_id', $sessionId)
             ->orderByDesc('viewed_at')
-            ->skip(10)
-            ->pluck('id');
+            ->pluck('id')
+            ->slice(10)
+            ->values();
 
         if ($staleIds->isNotEmpty()) {
             RecentlyViewedProduct::query()->whereIn('id', $staleIds)->delete();
