@@ -71,6 +71,37 @@
         </form>
     </div>
 
+    @if($recentlyViewedProducts->count())
+        <div class="mb-10">
+            <h2 class="mb-4 text-2xl font-bold">Недавно просмотренные</h2>
+
+            <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                @foreach($recentlyViewedProducts as $recentProduct)
+                    <div class="overflow-hidden rounded-xl bg-white shadow">
+                        <div class="aspect-[4/3] bg-gray-200">
+                            @if($recentProduct->image_path)
+                                <img src="{{ asset('storage/'.$recentProduct->image_path) }}" alt="{{ $recentProduct->name }}" class="h-full w-full object-cover">
+                            @else
+                                <div class="flex h-full items-center justify-center text-gray-500">Нет изображения</div>
+                            @endif
+                        </div>
+
+                        <div class="p-5">
+                            <div class="mb-2 text-sm text-gray-500">{{ $recentProduct->category?->name }}</div>
+                            <h3 class="text-xl font-semibold">{{ $recentProduct->name }}</h3>
+                            <div class="mt-4 flex items-center justify-between">
+                                <div class="text-2xl font-bold">{{ number_format((float) $recentProduct->price, 2, '.', ' ') }} ₽</div>
+                                <a href="{{ route('catalog.show', $recentProduct) }}" class="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700">
+                                    Открыть
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     @if($products->count())
         <div class="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             @foreach($products as $product)
@@ -90,7 +121,7 @@
 
                         <div class="mt-4 flex items-center justify-between">
                             <div>
-                                <div class="text-2xl font-bold">{{ number_format($product->price, 2, '.', ' ') }} ₽</div>
+                                <div class="text-2xl font-bold">{{ number_format((float) $product->price, 2, '.', ' ') }} ₽</div>
                                 <div class="text-sm text-gray-500">Остаток: {{ $product->stock }}</div>
                             </div>
                             <a href="{{ route('catalog.show', $product) }}" class="rounded-lg bg-green-600 px-4 py-2 text-white hover:bg-green-700">
@@ -101,7 +132,7 @@
                         <div class="mt-3 text-sm text-gray-600">
                             Рейтинг:
                             @if($product->reviews_avg_rating)
-                                {{ number_format($product->reviews_avg_rating, 1) }}/5
+                                {{ number_format((float) $product->reviews_avg_rating, 1) }}/5
                             @else
                                 Нет оценок
                             @endif

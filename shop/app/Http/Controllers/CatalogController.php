@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\RecentlyViewedProduct;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class CatalogController extends Controller
@@ -54,6 +55,7 @@ class CatalogController extends Controller
             'products' => $products,
             'categories' => $categories,
             'filters' => $filters,
+            'recentlyViewedProducts' => $this->getRecentlyViewedProducts($request)->take(6),
         ]);
     }
 
@@ -88,6 +90,7 @@ class CatalogController extends Controller
         return view('catalog.show', [
             'product' => $product,
             'relatedProducts' => $relatedProducts,
+            'recentlyViewedProducts' => $this->getRecentlyViewedProducts($request, $product->id)->take(6),
         ]);
     }
 
@@ -144,5 +147,30 @@ class CatalogController extends Controller
         if ($staleIds->isNotEmpty()) {
             RecentlyViewedProduct::query()->whereIn('id', $staleIds)->delete();
         }
+    }
+
+    protected function getRecentlyViewedProducts(Request $request, ?int $exceptProductId = null): Collection
+    {
+        if (! $request->hasSession()) {
+            return collect();
+        }
+
+        $query = RecentlyViewedProduct::query()
+            ->with('product.category')
+            ->orderByDesc('viewed_at');
+
+        if ($request->user()) {
+            $query->where('user_id', $request->user()->id);
+        } else {
+            $query->where('session_id', $request->session()->getId());
+        }
+
+        return $query
+            ->get()
+            ->map(fn (RecentlyViewedProduct $item) => $item->product)
+            ->filter(fn ($product) => $product && $product->is_active)
+            ->filter(fn ($product) => $exceptProductId === null || $product->id !== $exceptProductId)
+            ->unique('id')
+            ->values();
     }
 }
